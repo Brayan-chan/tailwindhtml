@@ -6,8 +6,22 @@
     <title>Caja de Comentarios</title>
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Flowbite -->
-    <link href="https://unpkg.com/flowbite@1.4.5/dist/flowbite.min.css" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="icon" sizes="32x32" href="jamy.png">
+    <style>
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #888;
+        }
+        .comment-text.collapsed {
+            overflow: hidden;
+            max-height: 4.5rem; /* Limita la altura a 3 líneas de texto */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 p-6">
     <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-lg">
@@ -19,7 +33,7 @@
                 <button onclick="formatText('bold')" class="px-4 py-2 bg-gray-300 rounded-lg font-bold">B</button>
                 <button onclick="formatText('italic')" class="px-4 py-2 bg-gray-300 rounded-lg italic">I</button>
                 <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="addImage()">
-                <button onclick="document.getElementById('imageUpload').click()" class="px-4 py-2 bg-gray-300 rounded-lg">📷</button>
+                <button onclick="document.getElementById('imageUpload').click()" class="px-4 py-2 bg-gray-300 rounded-lg"><i class="fa-solid fa-image"></i></button>
             </div>
             <div id="newCommentContainer" class="w-full p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" contenteditable="true" data-placeholder="Escribe un comentario..."></div>
             <button onclick="addComment()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg">Enviar</button>
@@ -43,9 +57,6 @@
         </div>
     </div>
 
-    <!-- Flowbite JS -->
-    <script src="https://unpkg.com/flowbite@1.4.5/dist/flowbite.js"></script>
-
     <!-- Script para manejar comentarios, likes, dislikes, eliminación, formato y acordeón -->
     <script>
         let commentIdCounter = 0;
@@ -65,42 +76,51 @@
         function createCommentElement(commentId, commentText) {
             const commentElement = document.createElement('div');
             commentElement.id = commentId;
-            commentElement.classList.add('p-4', 'mb-4', 'bg-gray-100', 'rounded-lg', 'border', 'border-gray-300');
+            commentElement.classList.add('p-4', 'mb-4', 'bg-white', 'rounded-lg', 'border', 'border-gray-300', 'shadow');
 
             commentElement.innerHTML = `
-            <div id="${commentId}-actions" class="flex justify-end space-x-2 mb-2">
-                <button onclick="likeComment('${commentId}')" class="text-green-500 flex items-center">
-                    👍 <span id="${commentId}-likes" class="ml-1">0</span>
-                </button>
-                <button onclick="dislikeComment('${commentId}')" class="text-red-500 flex items-center">
-                    👎 <span id="${commentId}-dislikes" class="ml-1">0</span>
-                </button>
-                <button onclick="replyToComment('${commentId}')" class="text-blue-500">↴</button>
-                <button onclick="showConfirmationModal('${commentId}')" class="text-gray-500 flex items-center">
-                    🗑️
-                </button>
-            </div>
-            <div class="overflow-hidden" style="max-height: 6em;" id="${commentId}-text">
-                ${commentText}
-            </div>
-            <div class="flex justify-between items-center mt-2">
-                <button onclick="toggleComment('${commentId}')" class="text-blue-500">∨</button>
-            </div>
-            <div id="${commentId}-replies" class="mt-4 space-y-4 pl-4 border-l-2 border-gray-300"></div>
-        `;
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center">
+                        <img src="https://via.placeholder.com/40" alt="avatar" class="rounded-full mr-2">
+                        <div>
+                            <span class="font-bold">Usuario</span>
+                            <span class="text-gray-500 text-sm">1 d</span>
+                        </div>
+                    </div>
+                    <button onclick="showConfirmationModal('${commentId}')" class="text-gray-500">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="${commentId}-text" class="comment-text collapsed mb-2">
+                    ${commentText}
+                </div>
+                <button onclick="toggleComment('${commentId}')" class="text-blue-500">Ver más</button>
+                <div class="flex justify-between items-center mt-2">
+                    <div class="flex space-x-2">
+                        <button onclick="likeComment('${commentId}')" class="text-blue-500 flex items-center">
+                            <i class="fas fa-thumbs-up"></i> <span id="${commentId}-likes" class="ml-1">0</span>
+                        </button>
+                        <button onclick="dislikeComment('${commentId}')" class="text-blue-500 flex items-center">
+                            <i class="fas fa-thumbs-down"></i> <span id="${commentId}-dislikes" class="ml-1">0</span>
+                        </button>
+                        <button onclick="replyToComment('${commentId}')" class="text-blue-500"><i class="fa-solid fa-reply"></i></button>
+                    </div>
+                </div>
+                <div id="${commentId}-replies" class="mt-4 space-y-4 pl-4 border-l-2 border-gray-300 hidden"></div>
+            `;
 
             return commentElement;
         }
 
         function toggleComment(commentId) {
             const commentTextElement = document.getElementById(commentId + '-text');
-            const button = commentTextElement.nextElementSibling.children[0];
-            if (commentTextElement.style.maxHeight === '6em') {
-                commentTextElement.style.maxHeight = 'none';
-                button.textContent = '∧';
+            const button = commentTextElement.nextElementSibling;
+            if (commentTextElement.classList.contains('collapsed')) {
+                commentTextElement.classList.remove('collapsed');
+                button.textContent = 'Ver menos';
             } else {
-                commentTextElement.style.maxHeight = '6em';
-                button.textContent = '∨';
+                commentTextElement.classList.add('collapsed');
+                button.textContent = 'Ver más';
             }
         }
 
@@ -120,6 +140,7 @@
                 const replyId = commentId + '-reply-' + document.getElementById(commentId + '-replies').children.length;
                 const replyElement = createCommentElement(replyId, replyText);
                 document.getElementById(commentId + '-replies').appendChild(replyElement);
+                document.getElementById(commentId + '-replies').classList.remove('hidden');
             }
         }
 
