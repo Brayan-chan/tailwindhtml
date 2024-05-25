@@ -46,7 +46,7 @@
     <!-- Flowbite JS -->
     <script src="https://unpkg.com/flowbite@1.4.5/dist/flowbite.js"></script>
 
-    <!-- Script para manejar comentarios, likes, dislikes, eliminación y formato -->
+    <!-- Script para manejar comentarios, likes, dislikes, eliminación, formato y acordeón -->
     <script>
         let commentIdCounter = 0;
         let commentToDelete = null;
@@ -68,25 +68,40 @@
             commentElement.classList.add('p-4', 'mb-4', 'bg-gray-100', 'rounded-lg', 'border', 'border-gray-300');
 
             commentElement.innerHTML = `
-                <div class="flex justify-between items-start">
-                    <div>${commentText}</div>
-                    <div class="flex space-x-2">
-                        <button onclick="likeComment('${commentId}')" class="text-green-500 flex items-center">
-                            👍 <span id="${commentId}-likes" class="ml-1">0</span>
-                        </button>
-                        <button onclick="dislikeComment('${commentId}')" class="text-red-500 flex items-center">
-                            👎 <span id="${commentId}-dislikes" class="ml-1">0</span>
-                        </button>
-                        <button onclick="replyToComment('${commentId}')" class="text-blue-500">Responder</button>
-                        <button onclick="showConfirmationModal('${commentId}')" class="text-gray-500 flex items-center">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-                <div id="${commentId}-replies" class="mt-4 space-y-4 pl-4 border-l-2 border-gray-300"></div>
-            `;
+            <div id="${commentId}-actions" class="flex justify-end space-x-2 mb-2">
+                <button onclick="likeComment('${commentId}')" class="text-green-500 flex items-center">
+                    👍 <span id="${commentId}-likes" class="ml-1">0</span>
+                </button>
+                <button onclick="dislikeComment('${commentId}')" class="text-red-500 flex items-center">
+                    👎 <span id="${commentId}-dislikes" class="ml-1">0</span>
+                </button>
+                <button onclick="replyToComment('${commentId}')" class="text-blue-500">↴</button>
+                <button onclick="showConfirmationModal('${commentId}')" class="text-gray-500 flex items-center">
+                    🗑️
+                </button>
+            </div>
+            <div class="overflow-hidden" style="max-height: 6em;" id="${commentId}-text">
+                ${commentText}
+            </div>
+            <div class="flex justify-between items-center mt-2">
+                <button onclick="toggleComment('${commentId}')" class="text-blue-500">∨</button>
+            </div>
+            <div id="${commentId}-replies" class="mt-4 space-y-4 pl-4 border-l-2 border-gray-300"></div>
+        `;
 
             return commentElement;
+        }
+
+        function toggleComment(commentId) {
+            const commentTextElement = document.getElementById(commentId + '-text');
+            const button = commentTextElement.nextElementSibling.children[0];
+            if (commentTextElement.style.maxHeight === '6em') {
+                commentTextElement.style.maxHeight = 'none';
+                button.textContent = '∧';
+            } else {
+                commentTextElement.style.maxHeight = '6em';
+                button.textContent = '∨';
+            }
         }
 
         function likeComment(commentId) {
