@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja de Comentarios</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Flowbite -->
+    <link href="https://unpkg.com/flowbite@1.4.5/dist/flowbite.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-4">Caja de Comentarios</h2>
+
+        <!-- Formulario para nuevo comentario -->
+        <div class="mb-6">
+            <div class="flex space-x-2 mb-2">
+                <button onclick="formatText('bold')" class="px-4 py-2 bg-gray-300 rounded-lg font-bold">B</button>
+                <button onclick="formatText('italic')" class="px-4 py-2 bg-gray-300 rounded-lg italic">I</button>
+                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="addImage()">
+                <button onclick="document.getElementById('imageUpload').click()" class="px-4 py-2 bg-gray-300 rounded-lg">📷</button>
+            </div>
+            <div id="newCommentContainer" class="w-full p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" contenteditable="true" data-placeholder="Escribe un comentario..."></div>
+            <button onclick="addComment()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg">Enviar</button>
+        </div>
+
+        <!-- Lista de comentarios -->
+        <div id="commentsList">
+            <!-- Aquí se agregarán los comentarios -->
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="confirmationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-xl font-bold mb-4">Confirmar Eliminación</h3>
+            <p class="mb-4">¿Estás seguro de que deseas eliminar este comentario?</p>
+            <div class="flex justify-end space-x-4">
+                <button onclick="confirmDelete(true)" class="px-4 py-2 bg-red-600 text-white rounded-lg">Eliminar</button>
+                <button onclick="confirmDelete(false)" class="px-4 py-2 bg-gray-300 rounded-lg">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flowbite JS -->
+    <script src="https://unpkg.com/flowbite@1.4.5/dist/flowbite.js"></script>
+
+    <!-- Script para manejar comentarios, likes, dislikes, eliminación y formato -->
+    <script>
+        let commentIdCounter = 0;
+        let commentToDelete = null;
+
+        function addComment() {
+            const commentContainer = document.getElementById('newCommentContainer');
+            const commentText = commentContainer.innerHTML;
+            if (commentText.trim() !== '') {
+                const commentId = 'comment-' + commentIdCounter++;
+                const commentElement = createCommentElement(commentId, commentText);
+                document.getElementById('commentsList').appendChild(commentElement);
+                commentContainer.innerHTML = '';
+            }
+        }
+
+        function createCommentElement(commentId, commentText) {
+            const commentElement = document.createElement('div');
+            commentElement.id = commentId;
+            commentElement.classList.add('p-4', 'mb-4', 'bg-gray-100', 'rounded-lg', 'border', 'border-gray-300');
+
+            commentElement.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>${commentText}</div>
+                    <div class="flex space-x-2">
+                        <button onclick="likeComment('${commentId}')" class="text-green-500 flex items-center">
+                            👍 <span id="${commentId}-likes" class="ml-1">0</span>
+                        </button>
+                        <button onclick="dislikeComment('${commentId}')" class="text-red-500 flex items-center">
+                            👎 <span id="${commentId}-dislikes" class="ml-1">0</span>
+                        </button>
+                        <button onclick="replyToComment('${commentId}')" class="text-blue-500">Responder</button>
+                        <button onclick="showConfirmationModal('${commentId}')" class="text-gray-500 flex items-center">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+                <div id="${commentId}-replies" class="mt-4 space-y-4 pl-4 border-l-2 border-gray-300"></div>
+            `;
+
+            return commentElement;
+        }
+
+        function likeComment(commentId) {
+            const likesElement = document.getElementById(commentId + '-likes');
+            likesElement.textContent = parseInt(likesElement.textContent) + 1;
+        }
+
+        function dislikeComment(commentId) {
+            const dislikesElement = document.getElementById(commentId + '-dislikes');
+            dislikesElement.textContent = parseInt(dislikesElement.textContent) + 1;
+        }
+
+        function replyToComment(commentId) {
+            const replyText = prompt('Escribe tu respuesta:');
+            if (replyText && replyText.trim() !== '') {
+                const replyId = commentId + '-reply-' + document.getElementById(commentId + '-replies').children.length;
+                const replyElement = createCommentElement(replyId, replyText);
+                document.getElementById(commentId + '-replies').appendChild(replyElement);
+            }
+        }
+
+        function showConfirmationModal(commentId) {
+            commentToDelete = commentId;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+        }
+
+        function confirmDelete(confirm) {
+            if (confirm && commentToDelete) {
+                const commentElement = document.getElementById(commentToDelete);
+                commentElement.remove();
+            }
+            commentToDelete = null;
+            document.getElementById('confirmationModal').classList.add('hidden');
+        }
+
+        function formatText(command) {
+            document.execCommand(command, false, null);
+        }
+
+        function addImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const img = document.createElement('img');
+                img.src = reader.result;
+                img.className = 'w-full h-auto mt-2 rounded-lg';
+                const commentBox = document.getElementById('newCommentContainer');
+                commentBox.appendChild(img);
+            }
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>
